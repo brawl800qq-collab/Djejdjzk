@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nova</title>
+<meta name="theme-color" content="#0b0d17">
+<style>
+:root{--bg:#f2f3fb;--card:#fff;--ink:#12152b;--mut:#5d6488;--ln:#dcdff0;--ac:#7c6cff;--ac2:#13b8d6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d17;--card:#151a2e;--ink:#e8ecff;--mut:#8b93b8;--ln:#252c4a}}
+:root[data-theme="dark"]{--bg:#0b0d17;--card:#151a2e;--ink:#e8ecff;--mut:#8b93b8;--ln:#252c4a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ln);background:linear-gradient(120deg,rgba(124,108,255,.18),rgba(19,184,214,.1))}
+header b{font-size:22px;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header span{font-size:11px;color:var(--mut)}
+main{flex:1;min-height:0;position:relative}
+.pane{display:none;position:absolute;inset:0;flex-direction:column;padding:12px}
+.pane.on{display:flex}
+#log,#ml{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.m{max-width:88%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;background:var(--card);border:1px solid var(--ln)}
+.m.u{align-self:flex-end;background:linear-gradient(135deg,var(--ac),#5b8cff);color:#fff;border:0}
+.m.s{align-self:center;font-size:12px;color:var(--mut);background:none;border:0}
+.bar{display:flex;gap:8px;padding-top:10px}
+input{flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid var(--ln);background:var(--card);color:var(--ink);font:inherit}
+button{border-radius:12px;padding:9px 12px;background:var(--card);color:var(--ink);font:inherit;border:1px solid var(--ln)}
+button.pr{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0}
+.stage{flex:1;min-height:0;border-radius:18px;overflow:hidden;border:1px solid var(--ln)}
+canvas{width:100%;height:100%;display:block}
+.tools{display:none}.stage,#rep{display:none}#p-chat.gm .stage{display:block;flex:none;height:36%;margin-bottom:8px}#p-chat.gm #rep{display:block;padding:0 4px 6px}#mode{font:inherit;font-size:13px;padding:5px 8px;border-radius:10px;border:1px solid var(--ln);background:var(--card);color:var(--ink)}.ach{display:inline-block;margin:3px;padding:4px 10px;border-radius:12px;font-size:12px;border:1px solid var(--ln);color:var(--mut)}.ach.on{color:#fff;background:var(--ac);border:0}.gl{width:100%;font-size:12px;color:var(--mut)}
+.nb{padding:5px 9px;font-size:12px;border-radius:10px}.nb.on{background:var(--ac);color:#fff;border:0}
+#achs{display:flex;gap:6px;overflow-x:auto;flex:none;padding-top:8px}#achs .ach{margin:0;white-space:nowrap;flex:none}
+#rep{font-size:12px;color:var(--mut);min-height:18px}
+.it{display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:14px;background:var(--card);border:1px solid var(--ln)}
+.it div{flex:1}.it small{display:block;color:var(--mut)}
+nav{display:flex;border-top:1px solid var(--ln);background:var(--card)}
+nav button{flex:1;border:0;border-radius:0;background:none;padding:13px 0;color:var(--mut)}
+nav button.on{color:var(--ac);font-weight:600}
+</style></head>
+<body>
+<header><b>Nova</b><select id='mode'><option value='chat'>Обычный чат</option><option value='game'>Игры</option></select><button id="net" class="nb"></button></header>
+<main>
+<section id="p-chat" class="pane on"><div id="log"></div>
+<div class="bar"><input id="in" placeholder="Напиши сообщение…"><button class="pr" id="go">Отправить</button></div><div id="achs"></div></section>
+<section id="p-game" class="pane">
+<div class="stage"><canvas id="cv"></canvas></div>
+<div class="tools" id="tools">
+<b class="gl">Блендер</b><button data-a="add:box">Куб</button><button data-a="add:sph">Шар</button><button data-a="add:cyl">Цилиндр</button>
+<button data-a="x-">←</button><button data-a="x+">→</button><button data-a="z-">↑</button><button data-a="z+">↓</button><button data-a="y+">Вверх</button><button data-a="y-">Вниз</button>
+<button data-a="s+">Больше</button><button data-a="s-">Меньше</button><button data-a="c">Цвет</button><button data-a="d">Удалить</button>
+<button data-a="cam-">⟲</button><button data-a="cam+">⟳</button>
+<b class="gl">Движок</b><button class="pr" id="play" data-a="play">Запустить физику</button><button class="pr" data-a="chk">Проверить</button>
+</div><div id="rep">Скажи Nova, что сделать в игре: «создай куб», «запусти физику».</div><div class="bar"><input id="gin" placeholder="Скажи Nova: создай куб"><button class="pr" id="gg">Ок</button></div></section>
+<section id="p-mem" class="pane"><div id="ml"></div><div class="bar"><button id="wipe">Очистить память</button></div></section>
+</main>
+<nav><button class="on" data-t="chat">Чат</button><button data-t="mem">Память</button></nav>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const S={g(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let chat=S.g('chat2',[]),mem=S.g('mem',[]);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const W=s=>[...new Set(s.toLowerCase().split(/[^a-zа-яё0-9]+/).filter(w=>w.length>2).map(w=>w.slice(0,5)))];
+function recall(q){const w=W(q);return mem.filter(m=>m.k!='сводка').map(m=>({m,s:w.filter(x=>m.w.includes(x)).length})).filter(x=>x.s).sort((a,b)=>b.s-a.s).slice(0,3).map(x=>x.m)}
+function addMem(t,k){mem.push({t:t,k:k||'факт',w:W(t),d:new Date().toLocaleDateString('ru')});S.s('mem',mem);drawMem()}
+function compact(){if(chat.length>14){const old=chat.splice(0,8);addMem('Сводка диалога: '+old.filter(m=>m.r=='u').map(m=>m.t.slice(0,60)).join('; '),'сводка')}}
+let mode='chat';
+function say(r,t){chat.push({r:r,t:t});compact();S.s(mode=='game'?'gchat2':'chat2',chat);drawChat()}
+function drawChat(){$('log').innerHTML=chat.map(m=>'<div class="m '+m.r+'">'+esc(m.t)+'</div>').join('');$('log').scrollTop=1e9}
+function drawMem(){$('ml').innerHTML=mem.some(m=>m.k!='сводка')?mem.map((m,i)=>m.k=='сводка'?'':'<div class="it"><div>'+esc(m.t)+'<small>'+m.k+' · '+m.d+'</small></div><button data-i="'+i+'">Забыть</button></div>').join(''):'<div class="m s">Память пуста. Напиши в чате: запомни …</div>'}
+function brain(t){let m;
+ if(m=t.match(/^запомни[:\s]+(.+)/i)){addMem(m[1]);return 'Записал в память: «'+m[1]+'»'}
+ if(/^забудь вс[её]/i.test(t)){mem=[];S.s('mem',mem);drawMem();return 'Память очищена.'}
+ const r=recall(t.replace(/помни(шь|ть)|вспомни/gi,''));
+ if(/помни(шь|ть)|вспомни|раньше/i.test(t))return r.length?'Вспомнил:\n'+r.map(x=>'• '+x.t).join('\n'):'В памяти нет ничего похожего.';
+ const c=calc(t);if(c)return c;const a=skill(t);if(a)return a;
+ if(r.length)return 'Это связано с тем, что уже в памяти:\n'+r.map(x=>'• '+x.t).join('\n');
+ return mode=='game'?'Не понял. Команды: куб, шар, цилиндр, цвет, больше, меньше, удалить, физика, стоп, проверка. Или опиши игру.':NF}
+const NF='Не совсем понял. Скажи иначе или спроси что-нибудь другое.';
+let net=S.g('net',false),web=S.g('web',[]);
+function drawNet(){const b=$('net');b.textContent=net?'🌐 Онлайн':'Офлайн';b.classList.toggle('on',net)}
+$('net').onclick=()=>{if(!net&&navigator.onLine===false){say('b','Нет подключения к сети. Включи интернет на телефоне.');return}net=!net;S.s('net',net);drawNet();say('b',net?'Интернет включён: могу искать ответы и учиться из сети.':'Интернет выключен. Учусь сама, без сети.')};
+const clip=t=>{t=t.replace(/\s+/g,' ').replace(/\([^)]*\)/g,'').trim();const m=t.match(/^(.{40,260}?[.!?])(\s|$)/);return m?m[1]:t.slice(0,200)};
+async function wiki(p){const r=await fetch('https://ru.wikipedia.org/'+p);if(!r.ok)throw 0;return r.json()}
+function saveWeb(k,a){if(web.some(x=>x[1]==a))return;web.push([k,a]);if(web.length>300)web.shift();S.s('web',web);KB.push(['Сеть',k,a])}
+async function lookup(q){try{const k=q.replace(/[?!.]/g,'').replace(/^(что такое|кто такой|кто такая|кто такие|что значит|расскажи про|расскажи о|объясни|что за)\s+/i,'').trim();const s=await wiki('w/api.php?action=query&list=search&srsearch='+encodeURIComponent(k)+'&srlimit=1&format=json&origin=*');const h=s.query.search[0];if(!h)return null;const d=await wiki('api/rest_v1/page/summary/'+encodeURIComponent(h.title));if(!d.extract)return null;const a=clip(d.extract);saveWeb(k+' '+h.title,a);return a}catch(e){return null}}
+async function surf(){try{const d=await wiki('api/rest_v1/page/random/summary');if(d.extract&&d.title)saveWeb(d.title,clip(d.extract))}catch(e){}}
+function calc(t){const e=t.toLowerCase().replace(/сколько будет|посчитай|реши|вычисли|равно|[=?]/g,'').replace(/[x×х]/g,'*').replace(/÷|:/g,'/').replace(/,/g,'.').replace(/\^/g,'**').trim();if(!/^[\d\s+\-*\/().%]+$/.test(e)||!/\d\s*[-+*\/%]\s*[\d(]/.test(e))return null;try{const r=Function('"use strict";return ('+e+')')();return isFinite(r)?String(Math.round(r*1e6)/1e6).replace('.',','):null}catch(x){return null}}
+function send(){const v=$('in').value.trim();if(!v)return;$('in').value='';say('u',v);const r=brain(v);if(r==NF&&net)lookup(v).then(a=>say('b',a||r));else say('b',r)}
+$('go').onclick=send;$('in').onkeydown=e=>{if(e.key=='Enter')send()};
+$('ml').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;mem.splice(+i,1);S.s('mem',mem);drawMem()};
+$('wipe').onclick=()=>{mem=[];S.s('mem',mem);drawMem()};
+function show(n){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id=='p-'+n));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==n));if(n=='game')initGame()}
+document.querySelector('nav').onclick=e=>{if(e.target.dataset.t)show(e.target.dataset.t)};
+/* мини-нейросеть: слова → намерение */
+const DATA={hi:['привет','здравствуй','хай','добрый день','здорово','салам'],thx:['спасибо','благодарю','круто','класс','супер'],who:['кто ты','как тебя зовут','что ты умеешь','что можешь','помощь','помоги'],game:['режим игры','включи игру','хочу сделать игру','создать игру','открой движок','открой блендер','давай делать игру'],chat:['обычный чат','выйди из игры','режим чата','назад в чат','хватит игры'],box:['создай куб','добавь куб','сделай кубик','поставь ящик','нужен куб','новый куб'],sph:['создай шар','добавь шар','сделай мяч','нужен шарик','новый шар'],cyl:['создай цилиндр','добавь цилиндр','сделай столб','поставь бочку','новый цилиндр'],col:['покрась','поменяй цвет','другой цвет','сделай красным','перекрась объект'],big:['увеличь','сделай больше','побольше','раздуй','больше'],sml:['уменьши','сделай меньше','поменьше','сузь','меньше'],del:['удали','убери','сотри','удалить объект','выбрось'],run:['запусти физику','включи гравитацию','пусть падает','старт физики','играй'],stp:['останови физику','выключи гравитацию','стоп','пауза','замри'],chk:['проверь','проверка движка','запусти тест','есть ошибки','проверь сцену']};
+DATA.how=['как дела','как ты','как жизнь','как настроение','что нового','как поживаешь','как сам','как оно'];DATA.bye=['пока','до свидания','до встречи','увидимся','споки','доброй ночи'];
+DATA.self=['как ты развиваешься','твой уровень','статистика','чему ты научился','что ты выучил','как твоё обучение'];
+const LAB={куб:'box',шар:'sph',цилиндр:'cyl',цвет:'col',больше:'big',меньше:'sml',удалить:'del',физика:'run',стоп:'stp',проверка:'chk',игра:'game',чат:'chat',привет:'hi'};
+const CW={красн:0xe53935,син:0x1e88e5,голуб:0x4fc3f7,зелен:0x43a047,жёлт:0xfdd835,желт:0xfdd835,оранж:0xfb8c00,фиолет:0x8e24aa,розов:0xec407a,бел:0xf5f5f5,чёрн:0x222222,черн:0x222222,сер:0x9e9e9e};
+let teach=S.g('teach',[]),L=Object.keys(DATA),V=new Map(),Wt=[],B=[];
+teach.forEach(x=>{if(DATA[x[0]])DATA[x[0]].push(x[1])});
+let gen=S.g('gen',1),auto=S.g('auto',[]),newN=0,lastP=0;
+auto.forEach(x=>{if(DATA[x[0]])DATA[x[0]].push(x[1])});
+function soft(f){const z=L.map((_,c)=>B[c]+f.reduce((s,w)=>s+(V.has(w)?Wt[c][V.get(w)]:0),0)),m=Math.max(...z),e=z.map(x=>Math.exp(x-m)),s=e.reduce((a,b)=>a+b);return e.map(x=>x/s)}
+function train(){V=new Map();L.forEach(k=>DATA[k].forEach(t=>W(t).forEach(w=>{if(!V.has(w))V.set(w,V.size)})));Wt=L.map(()=>new Array(V.size).fill(0));B=L.map(()=>0);
+ const ex=L.flatMap((k,i)=>DATA[k].map(t=>[W(t),i]));
+ for(let e=0;e<150;e++)for(const [f,y] of ex){const p=soft(f);L.forEach((_,c)=>{const g=.4*(p[c]-(c==y?1:0));f.forEach(w=>Wt[c][V.get(w)]-=g);B[c]-=g})}}
+function guess(t){const f=W(t).filter(w=>V.has(w));if(!f.length)return null;const p=soft(f),i=p.indexOf(Math.max(...p));lastP=p[i];return p[i]>.5?L[i]:null}
+train();
+function skill(t){let m;
+ if(mode=='game'&&(m=t.match(/^научи[:\s]+(.+?)\s*=\s*(.+)$/i))){const id=LAB[m[2].trim().toLowerCase()];if(!id)return 'Не знаю команду «'+m[2]+'». Есть: '+Object.keys(LAB).join(', ');DATA[id].push(m[1]);teach.push([id,m[1]]);S.s('teach',teach);train();return 'Выучил: «'+m[1]+'» = '+m[2]}
+ let id=guess(t);
+ if(mode!='game'&&['box','sph','cyl','col','big','sml','del','run','stp','chk','game','chat'].includes(id))id=null;
+ if(id&&lastP>.6)learn(id,t);
+ if(!id||lastP<.8){const a=ask(t);if(a)return a}
+ const g=mode=='game';
+ if(g){if(Object.keys(CW).some(k=>t.toLowerCase().includes(k))&&!/созд|добав|постав|нов/i.test(t))id='col';
+  if(/игр/i.test(t)&&/созда|сдела|напиш|придума|нов|хочу/i.test(t))return buildGame(t)}
+ if(!id)return null;
+ if(id=='hi')return g?'Привет! Я Nova. Скажи, какую игру сделать.':'Привет! Чем могу помочь?';
+ if(id=='thx')return 'Всегда пожалуйста!';
+ if(id=='how')return 'Отлично, спасибо! А у тебя как?';
+ if(id=='bye')return 'Пока! Заходи ещё.';
+ if(id=='self')return report();
+ if(id=='who')return g?'Я Nova. Здесь я делаю игры: опиши, что хочешь.':'Я Nova. Отвечаю на вопросы, поддерживаю разговор и запоминаю то, что ты просишь.';
+ if(id=='chat'){setMode('chat');return 'Вернулась в обычный чат.'}
+ if(id=='game'){setMode('game');return 'Режим игр. Скажи, какую игру сделать.'}
+ return gameCmd(id,t)}
+function gameCmd(id,t){if(mode!='game')setMode('game');if(!ren)return 'Движок не запустился: нужен WebGL.';
+ if(id=='box'||id=='sph'||id=='cyl'){add(id);return 'Готово, добавил '+({box:'куб',sph:'шар',cyl:'цилиндр'})[id]+'.'}
+ if(id=='run'){play=true;$('play').textContent='Остановить физику';return 'Готово, всё пришло в движение.'}
+ if(id=='stp'){play=false;$('play').textContent='Запустить физику';return 'Остановил.'}
+ if(id=='chk')return selfCheck();
+ if(!sel)return 'Сначала создай объект, например «создай куб».';
+ if(id=='col'){const k=Object.keys(CW).find(k=>t.toLowerCase().includes(k));k?sel.material.color.setHex(CW[k]):sel.material.color.copy(COL());return 'Готово, покрасил.'}
+ ACT[{big:'s+',sml:'s-',del:'d'}[id]](sel);return 'Готово.'}
+function gsend(){const v=$('gin').value.trim();if(!v)return;$('gin').value='';say('u',v);const r=brain(v);say('b',r);$('rep').textContent=r}
+$('gg').onclick=gsend;$('gin').onkeydown=e=>{if(e.key=='Enter')gsend()};
+/* самообучение */
+function learn(id,t){if(!W(t).some(w=>!V.has(w)))return;DATA[id].push(t);auto.push([id,t]);if(auto.length>300)auto.shift();S.s('auto',auto);if(++newN>=1){newN=0;train();gen++;S.s('gen',gen);head()}}
+function study(){let ok=0,n=0;L.forEach(k=>DATA[k].forEach(t=>{n++;if(guess(t)==k)ok++}));
+ if(ok<n){train();fixes++;S.s('fixes',fixes)}
+ const seen=new Set(),b=mem.length;mem=mem.filter(m=>!seen.has(m.t)&&seen.add(m.t));if(mem.length!=b){S.s('mem',mem);drawMem()}
+ return {acc:Math.round(100*ok/n),n:n}}
+function head(){gen=1+Math.floor((known.size*2+auto.length/3+fixes*3+V.size/20)/6);}
+function report(){study();head();return 'Я учусь на каждом разговоре и с каждой минутой отвечаю лучше.'}
+function selfCheck(){let f=0;objs.forEach(o=>{const h=o.userData.h*o.scale.y;if(Math.abs(o.position.x)>14||Math.abs(o.position.z)>14){o.position.x=0;o.position.z=0;f++}if(o.position.y<h-.01){o.position.y=h;f++}});fixes+=f;S.s('fixes',fixes);return f?'Проверила игру, нашла ошибок: '+f+'. Исправила.':'Проверила игру: ошибок нет.'}
+/* знания и развитие */
+const KB=[['Физика','скорость путь время','Скорость = путь / время (v = s / t).'],['Физика','сила ньютон закон масса ускорение','Второй закон Ньютона: F = m·a, сила равна массе, умноженной на ускорение.'],['Физика','гравитация свободное падение ускорение земля','Ускорение свободного падения на Земле около 9,8 м/с².'],['Физика','свет скорость света','Скорость света в вакууме около 300 000 км/с.'],['Физика','ом закон ток напряжение сопротивление','Закон Ома: I = U / R.'],['Физика','энергия кинетическая','Кинетическая энергия: E = m·v² / 2.'],['Физика','давление','Давление = сила / площадь (p = F / S).'],['Химия','вода формула','Формула воды — H₂O: два атома водорода и один кислорода.'],['Химия','менделеев таблица периодическая','Периодическую таблицу создал Дмитрий Менделеев в 1869 году.'],['Химия','кислород','Кислород (O, номер 8) нужен для дыхания и горения.'],['Химия','углекислый газ','Углекислый газ — CO₂.'],['Химия','соль поваренная','Поваренная соль — NaCl.'],['Химия','кислота щёлочь кислотность','pH ниже 7 — кислота, выше 7 — щёлочь, 7 — нейтрально.'],['Алгебра','квадратное уравнение дискриминант корни','Для ax² + bx + c = 0: D = b² − 4ac; если D > 0, два корня.'],['Алгебра','квадрат суммы','(a + b)² = a² + 2ab + b².'],['Алгебра','разность квадратов','a² − b² = (a − b)(a + b).'],['Алгебра','виета теорема','Теорема Виета: x₁ + x₂ = −b/a, x₁·x₂ = c/a.'],['Алгебра','пифагор теорема гипотенуза катет','Теорема Пифагора: c² = a² + b².'],['Алгебра','процент проценты','1 % — это одна сотая часть числа.'],['Русский','жи ши правило','«Жи» и «ши» пишем с буквой И.'],['Русский','не глагол частица','«Не» с глаголами пишется раздельно.'],['Русский','части речи','В русском 10 частей речи: самостоятельные, служебные и междометия.'],['Русский','падеж падежи','Падежей шесть: именительный, родительный, дательный, винительный, творительный, предложный.'],['Русский','тся ться глагол','«-ться» отвечает на вопрос «что делать?», «-тся» — на «что делает?».'],['Английский','привет hello спасибо please слова','Hello — привет, thank you — спасибо, please — пожалуйста.'],['Английский','артикль article','Артикли: a/an — неопределённый, the — определённый.'],['Английский','глагол быть','Глагол to be: I am, you are, he/she/it is, we/they are.'],['Английский','present simple время','Present Simple: I work, he works — для привычек и фактов.'],['Английский','неправильные глаголы irregular','go — went — gone, see — saw — seen, be — was/were — been.'],['География','столица россии москва','Столица России — Москва.'],['География','гора эверест высокая','Самая высокая гора — Эверест, около 8849 м.'],['География','океан океаны','Океанов пять: Тихий, Атлантический, Индийский, Северный Ледовитый, Южный.'],['Биология','клетка','Клетка — основная единица живого.'],['Биология','фотосинтез растения','Фотосинтез: растения превращают свет, воду и CO₂ в глюкозу и кислород.'],['Биология','днк ген наследственность','ДНК хранит наследственную информацию.'],['Информатика','бит байт','1 байт = 8 бит.'],['Информатика','алгоритм','Алгоритм — чёткая последовательность шагов для решения задачи.'],['Информатика','нейросеть обучение','Нейросеть учится, подстраивая веса связей под примеры, так учусь и я.'],['Космос','солнце звезда','Солнце — звезда, вокруг которой вращается Земля.'],['Космос','планеты солнечная система','В Солнечной системе восемь планет, ближайшая к Солнцу — Меркурий.'],['Космос','луна спутник земля','Луна — естественный спутник Земли.'],['Космос','гагарин космос первый полёт','Юрий Гагарин первым полетел в космос 12 апреля 1961 года.'],['История','великая отечественная война победа','Великая Отечественная война закончилась победой 9 мая 1945 года.'],['История','пётр первый петр император','Пётр I — первый российский император.'],['Математика','пи число окружность','Число π ≈ 3,14159.'],['Математика','площадь круга радиус','Площадь круга: S = π·r².'],['Математика','простое число','Простое число делится только на 1 и на себя.'],['Природа','самое большое животное кит','Самое большое животное — синий кит.'],['Природа','сколько дней год високосный','В году 365 дней, в високосном — 366.'],['Природа','континенты материки','Континентов шесть: Евразия, Африка, Северная и Южная Америка, Австралия, Антарктида.'],['География','байкал озеро глубокое','Байкал — самое глубокое озеро мира.'],['География','самая длинная река','Самая длинная река — Нил (около 6650 км).']];
+const TOP=[...new Set(KB.map(k=>k[0]))];const KB0=KB.length;web.forEach(w=>KB.push(['Сеть',w[0],w[1]]));
+const WK=s=>[...new Set(s.toLowerCase().split(/[^a-zа-яё0-9]+/).filter(w=>w.length>2).map(w=>w.slice(0,Math.max(3,Math.min(5,w.length-1)))))];
+let known=new Set(S.g('known',[])),fixes=S.g('fixes',0),slept=S.g('slept',0),gainTxt='',un=new Set(S.g('ach',[])),G=null;
+const VB=['создай','добавь','сделай','поставь','нужен','новый','хочу'],OB={box:['куб','кубик','ящик','коробку'],sph:['шар','шарик','мяч'],cyl:['цилиндр','столб','бочку']};
+function imagine(){if(auto.length>=300)return;const id=['box','sph','cyl'][Math.random()*3|0],o=OB[id],p=VB[Math.random()*VB.length|0]+' '+o[Math.random()*o.length|0];if(!DATA[id].includes(p)){DATA[id].push(p);auto.push([id,p])}}
+function learnFact(i){known.add(i);S.s('known',[...known])}
+function ask(t){const w=WK(t);let b=-1,bs=0;KB.forEach((k,i)=>{const s=WK(k[1]).filter(x=>w.includes(x)).length;if(s>bs){bs=s;b=i}});if(b<0)return null;learnFact(b);return KB[b][2]}
+const ACH=[['Первые слова',()=>V.size>=50],['Первый факт',()=>known.size>=1],['10 фактов',()=>known.size>=10],['Эрудит',()=>TOP.every(p=>KB.some((k,i)=>k[0]==p&&known.has(i)))],['Отличница',()=>known.size>=KB0],['Самоучка',()=>auto.length>=5],['Уровень 5',()=>gen>=5],['Исправила ошибку',()=>fixes>=1],['Училась без тебя',()=>slept>=1]];
+function ach(){ACH.forEach(a=>{if(a[1]()&&!un.has(a[0])){un.add(a[0]);S.s('ach',[...un])}});drawAch()}
+function drawAch(){$('achs').innerHTML=ACH.map(a=>'<span class="ach'+(un.has(a[0])?' on':'')+'">'+a[0]+'</span>').join('')}
+var tc=0;function tick(n){let g=0;for(let i=0;i<n;i++){const rest=KB.map((_,j)=>j).filter(j=>!known.has(j));if(rest.length){learnFact(rest[Math.random()*rest.length|0]);g++}imagine()}S.s('auto',auto);if(n>3||++tc%4==0){train();study()}ach();return g}
+function catchUp(){const t0=S.g('t',0),n=Math.min(300,Math.floor((t0?(Date.now()-t0)/1000:0)/2));if(n>=1){const g=tick(n);slept++;S.s('slept',slept);head()}S.s('t',Date.now())}
+function buildGame(t){if(mode!='game')setMode('game');if(!ren)return 'Для игр нужен WebGL, на этом устройстве он не запустился.';
+ const k=/куб|ящик|короб/i.test(t)?'box':/цилиндр|бочк|столб/i.test(t)?'cyl':'sph',nm={box:'кубики',sph:'шарики',cyl:'цилиндры'}[k];
+ G=null;objs.forEach(o=>scene.remove(o));objs=[];sel=null;play=true;
+ ['Придумываю правила…','Пишу код игры…','Собираю уровень…','Проверяю и исправляю…','Готово! Игра «Лопни '+nm+'»: нажимай на падающие '+nm+'.'].forEach((s,i)=>setTimeout(()=>{say('b',s);if(i==3){G={k:k,score:0,t:0,best:S.g('best',0)};$('rep').textContent='Счёт: 0 · рекорд: '+G.best}},900*(i+1)));
+ return 'Принято, делаю игру.'}
+function setMode(m){mode=m;$('mode').value=m;chat=S.g(m=='game'?'gchat2':'chat2',[]);$('p-chat').classList.toggle('gm',m=='game');if(m=='game')initGame();drawChat()}
+$('mode').onchange=e=>{show('chat');setMode(e.target.value);if(!chat.length&&mode=='game')say('b','Режим игр. Опиши игру, например: «сделай игру с шарами». Остальное я сделаю сама.')};
+
+$('p-chat').insertBefore($('rep'),$('log'));$('p-chat').insertBefore(document.querySelector('.stage'),$('rep'));
+catchUp();head();ach(true);drawNet();
+setInterval(()=>{tick(3);head()},3000);
+setInterval(()=>{if(net&&navigator.onLine!==false)surf()},20000);
+setInterval(()=>S.s('t',Date.now()),5000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)S.s('t',Date.now());else catchUp()});
+study();head();
+/* игра */
+let scene,cam,ren,ray,objs=[],sel=null,play=false,ang=.8,fps=0,ready=false;
+const COL=()=>new THREE.Color().setHSL(Math.random(),.7,.55);
+function initGame(){if(ready)return;ready=true;
+ try{ren=new THREE.WebGLRenderer({canvas:$('cv'),antialias:true});
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0d17);
+ cam=new THREE.PerspectiveCamera(55,1,.1,100);ray=new THREE.Raycaster();
+ scene.add(new THREE.HemisphereLight(0xffffff,0x333344,.9));
+ const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(4,8,3);scene.add(dl);
+ const g=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x1b2140}));g.rotation.x=-Math.PI/2;scene.add(g);
+ loop(performance.now())}
+ catch(e){$('rep').textContent='3D не запустился: нужен WebGL и загрузка библиотеки three.js.'}}
+function add(k){const geo=k=='box'?new THREE.BoxGeometry(1,1,1):k=='sph'?new THREE.SphereGeometry(.5,24,16):new THREE.CylinderGeometry(.5,.5,1,24);
+ const o=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:COL()}));o.position.set((Math.random()-.5)*6,3+Math.random()*2,(Math.random()-.5)*6);o.userData={v:0,h:.5};scene.add(o);objs.push(o);pick(o)}
+function pick(o){sel=o}
+$('cv').onpointerdown=e=>{if(!ray||!G)return;const r=$('cv').getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-((e.clientY-r.top)/r.height)*2+1},cam);const h=ray.intersectObjects(objs)[0];if(h){scene.remove(h.object);objs=objs.filter(x=>x!=h.object);G.score++;if(G.score>G.best){G.best=G.score;S.s('best',G.best)}$('rep').textContent='Счёт: '+G.score+' · рекорд: '+G.best}};
+const st=.5,ACT={'x-':o=>o.position.x-=st,'x+':o=>o.position.x+=st,'z-':o=>o.position.z-=st,'z+':o=>o.position.z+=st,'y+':o=>{o.position.y+=st;o.userData.v=0},'y-':o=>o.position.y=Math.max(o.userData.h*o.scale.y,o.position.y-st),'s+':o=>o.scale.multiplyScalar(1.2),'s-':o=>o.scale.multiplyScalar(.8),'c':o=>o.material.color.copy(COL()),'d':o=>{scene.remove(o);objs=objs.filter(x=>x!=o);sel=null}};
+function check(){const bad=objs.filter(o=>Math.abs(o.position.x)>14||Math.abs(o.position.z)>14).length,sunk=objs.filter(o=>o.position.y<o.userData.h*o.scale.y-.01).length;
+ $('rep').textContent='Проверка движка: объектов '+objs.length+', FPS '+fps+', за границей '+bad+', под полом '+sunk+(bad||sunk?'. Есть проблемы.':'. Всё в порядке.')}
+$('tools').onclick=e=>{const a=e.target.dataset.a;if(!a||!ren)return;
+ if(a.startsWith('add:'))add(a.slice(4));
+ else if(a=='play'){play=!play;e.target.textContent=play?'Остановить физику':'Запустить физику'}
+ else if(a=='chk')check();
+ else if(a=='cam-')ang-=.3;else if(a=='cam+')ang+=.3;
+ else if(sel&&ACT[a])ACT[a](sel)};
+let last=0,fc=0,ft=0;
+function loop(n){requestAnimationFrame(loop);const dt=Math.min((n-last)/1000,.05);last=n;fc++;if(n-ft>1000){fps=fc;fc=0;ft=n}
+ if(mode!='game'||!$('p-chat').classList.contains('on'))return;
+ const c=$('cv'),w=c.parentNode.clientWidth,h=c.parentNode.clientHeight;if(c.width!=w||c.height!=h){ren.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+ if(G){G.t+=dt;if(G.t>.7){G.t=0;add(G.k);if(objs.length>20)scene.remove(objs.shift())}}
+ if(play)objs.forEach(o=>{const u=o.userData,hh=u.h*o.scale.y;u.v-=9.8*dt;o.position.y+=u.v*dt;if(o.position.y<hh){o.position.y=hh;u.v=Math.abs(u.v)>1?-u.v*.45:0}});
+ cam.position.set(Math.cos(ang)*8,4.5,Math.sin(ang)*8);cam.lookAt(0,1,0);ren.render(scene,cam)}
+if(!chat.length)say('b','Привет! Я Nova. Спрашивай что угодно, а если скажешь «запомни …», я запомню.');else drawChat();
+drawMem();
+</script></body></html>
